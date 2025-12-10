@@ -185,7 +185,7 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
                 signal_msg = "\n\n☕ *Sinyal: Wait & See* \nTitik Masuk Belum Aman."
                 print("    (Harga sedang naik, tapi titik masuk belum aman. Hold kalau punya.)")
             else:
-                signal_msg = "\n\n☕ *Sinyal: Wait & See* \nTren Turun. Jangan Tangkap Pisau Jatuh."
+                signal_msg = "\n\n☕ *Sinyal edited: Wait & See* \nTren Turun. Jangan Tangkap Pisau Jatuh."
                 print("    (Tren turun. Jangan tangkap pisau jatuh.)")
 
         # Kirim!
