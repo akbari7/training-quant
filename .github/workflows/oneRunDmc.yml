@@ -33,4 +33,4 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
           ISDAILY: ${{ 1 }}
-        run: python bot-dmc-one.py
+        run: python bot-dmc-quant.py
