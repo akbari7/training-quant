@@ -176,16 +176,10 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
 
         # 4. Wait
         if not signal_found:
-            save_state({
-                f"{coin_id}_buy_price": harga_now,
-                f"{coin_id}_has_position": True
-            })
             print(">>> ☕ WAIT & SEE (Belum ada momen bagus)")
             if sma20_now > sma50_now:
-                signal_msg = "\n\n☕ *Sinyal: Wait & See* \nTitik Masuk Belum Aman."
                 print("    (Harga sedang naik, tapi titik masuk belum aman. Hold kalau punya.)")
             else:
-                signal_msg = "\n\n☕ *Sinyal edited: Wait & See* \nTren Turun. Jangan Tangkap Pisau Jatuh."
                 print("    (Tren turun. Jangan tangkap pisau jatuh.)")
 
         # Kirim!
