@@ -1,11 +1,14 @@
 # --- Scanner Pasar Crypto Universal (via CoinGecko) 🦎 ---
 # Support token kecil kayak DMC, PEPE, dll.
+import json
 import os
 import requests
 from pycoingecko import CoinGeckoAPI
 import pandas as pd
 from datetime import datetime
 import time
+import datetime
+from datetime import date
 
 # ==========================================
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
@@ -27,6 +30,26 @@ def kirim_telegram(pesan):
     except Exception as e:
         print(f"Gagal kirim Telegram: {e}")
 
+# Nama file database mini kita
+STATE_FILE = 'price-database.json'
+
+def load_state():
+    """Baca data terakhir dari file JSON"""
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE, 'r') as f:
+            return json.load(f)
+    return {} # Kalau file ga ada, return kosong
+
+def save_state(new_data):
+    """Update file JSON dengan data baru"""
+    # Baca dulu data lama biar ga ketimpa semua
+    current_data = load_state()
+    # Update key yang berubah aja
+    current_data.update(new_data)
+    
+    with open(STATE_FILE, 'w') as f:
+        json.dump(current_data, f, indent=4)
+        print("💾 Data berhasil disimpan ke JSON lokal!")
 
 
 def cek_kondisi_pasar_micin(coin_id='delorean'):
@@ -36,6 +59,13 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
     print(f"🕵️ Sedang melacak {coin_id.upper()} di CoinGecko... Tunggu bentar ⏳")
 
     try:
+        # 1. Di Awal Fungsi: BACA MEMORY
+        state = load_state()
+        # Ambil harga beli terakhir (kalau ada)
+        last_buy_price = state.get(f"{coin_id}_buy_price", 0) 
+        has_pos = state.get(f"{coin_id}_has_position", False)
+        print(f"🧐 Status Terakhir {coin_id}: Punya Barang? {has_pos} | Harga Modal: ${last_buy_price}")
+        
         # 1. Ambil Data Historis (90 hari terakhir cukup buat SMA50)
         # vs_currency='usd' artinya harga dalam Dollar
         raw_data = cg.get_coin_market_chart_by_id(id=coin_id, vs_currency='usd', days='100')
@@ -79,6 +109,8 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         rsi_prev = float(prev_row['RSI'])
 
         tanggal = last_row.name.strftime('%Y-%m-%d')
+        full_tanggal = last_row.name + datetime.timedelta(hours=7)
+        fix_tanggal = full_tanggal.strftime('%Y-%m-%d %H:%M')
 
         # --- TAMPILAN DASHBOARD ---
         print("\n" + "="*45)
@@ -109,9 +141,6 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
 
         # --- D. SUSUN PESAN TELEGRAM ---
         # Kita bikin format pesan yang cantik
-        header = f"🤖 *LAPORAN {tanggal}: {coin_id.upper()}*"
-        body = f"💵 Harga: ${harga_now:,.6f}\n📊 RSI: {rsi_now:.2f}"
-        
         signal_msg = ""
 
         # LOGIKA SINYAL
@@ -120,6 +149,11 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         # 1. Golden Cross
         if (sma20_prev < sma50_prev) and (sma20_now > sma50_now):
             print(">>> ✅ BUY NOW! (Golden Cross Terdeteksi)")
+            # Update JSON
+            save_state({
+                f"{coin_id}_buy_price": harga_now,
+                f"{coin_id}_has_position": True
+            })
             signal_found = True
             signal_msg = "\n\n🚀 *SINYAL: GOLDEN CROSS!* \nTren mulai naik. Cek market bos!"
 
@@ -132,6 +166,11 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         # 3. Sell Signal
         elif (rsi_prev > 70) and (rsi_now < 70):
             print(">>> ⚠️ SELL NOW! (Sudah mulai turun dari pucuk)")
+            # Reset JSON
+            save_state({
+                f"{coin_id}_buy_price": 0,
+                f"{coin_id}_has_position": False
+            })
             signal_found = True
             signal_msg = "\n\n⚠️ *WARNING: OVERBOUGHT* \nHati-hati pucuk. Jangan FOMO Tapi Boleh Jual."
 
@@ -146,9 +185,14 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
                 print("    (Tren turun. Jangan tangkap pisau jatuh.)")
 
         # Kirim!
-        full_pesan = header + body + signal_msg
-        kirim_telegram(full_pesan)
-        print(f"✅ Laporan {coin_id} terkirim ke HP!")
+        if (signal_msg):
+            header = f"🤖 *LAPORAN {fix_tanggal}: {coin_id.upper()}*"
+            body = f"💵 Harga: ${harga_now:,.6f}\n📊 RSI: {rsi_now:.2f}\n🧐 Posisi: {last_buy_price}"
+            full_pesan = header + body + signal_msg
+            kirim_telegram(full_pesan)
+            print(f"✅ Laporan {coin_id} terkirim ke HP!")
+        else:
+            print(f"✅ Laporan {coin_id} tidak dikirim ke HP!")
 
     except Exception as e:
         print(f"❌ Error: {e}")

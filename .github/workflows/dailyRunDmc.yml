@@ -3,8 +3,13 @@ name: Daily $DMC Scan
 on:
   schedule:
     # Jalan tiap 4 jam
-    - cron: '* */4 * * *'
+    - cron: '0 * * * *'
   workflow_dispatch: # Biar bisa di-klik Run manual kalau mau tes
+
+# --- IZIN MENULIS (TAMBAHAN 1) ---
+permissions:
+  contents: write
+# ---------------------------------
 
 jobs:
   build:
