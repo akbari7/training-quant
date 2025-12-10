@@ -179,11 +179,11 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         if not signal_found:
             print(">>> ☕ WAIT & SEE (Belum ada momen bagus)")
             if sma20_now > sma50_now:
-                if not ISDAILY:
+                if ISDAILY:
                     signal_msg = "\n\n☕ *Sinyal: Wait & See* \nTitik Masuk Belum Aman."
                 print("    (Harga sedang naik, tapi titik masuk belum aman. Hold kalau punya.)")
             else:
-                if not ISDAILY:
+                if ISDAILY:
                     signal_msg = "\n\n☕ *Sinyal: Wait & See* \nTren Turun. Jangan Tangkap Pisau Jatuh."
                 print("    (Tren turun. Jangan tangkap pisau jatuh.)")
 
