@@ -1,6 +1,6 @@
 {
   "btc_buy_price": 0,
   "btc_has_position": false,
-  "dmc_buy_price": 0,
-  "dmc_has_position": false
+  "delorean_buy_price": 0,
+  "delorean_has_position": false
 }
