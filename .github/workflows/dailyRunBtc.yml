@@ -1,9 +1,9 @@
-name: Daily Crypto Scan
+name: Daily $DMC Scan
 
 on:
   schedule:
     # Jalan tiap jam 00:00 UTC (Jam 07:00 WIB)
-    - cron: '* */4 * * *'
+    - cron: '0 0 * * *'
   workflow_dispatch: # Biar bisa di-klik Run manual kalau mau tes
 
 jobs:
@@ -27,4 +27,4 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
-        run: python bot-quant.py
+        run: python bot-btc-quant.py

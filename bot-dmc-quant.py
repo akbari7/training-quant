@@ -109,7 +109,7 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
 
         # --- D. SUSUN PESAN TELEGRAM ---
         # Kita bikin format pesan yang cantik
-        header = f"🤖 *LAPORAN PAGI: {coin_id.upper()}*"
+        header = f"🤖 *LAPORAN {tanggal}: {coin_id.upper()}*"
         body = f"💵 Harga: ${harga_now:,.6f}\n📊 RSI: {rsi_now:.2f}"
         
         signal_msg = ""
