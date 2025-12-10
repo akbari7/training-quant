@@ -13,7 +13,7 @@ TELEGRAM_CHAT_ID = os.getenv('CHAT_ID')
 
 # Error Handling
 if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
-    raise ValueError("❌ Error: Token atau Chat ID belum diset di Environment Variables!")
+    raise ValueError(f"❌ Error: Token-{TELEGRAM_TOKEN} atau Chat ID-{TELEGRAM_CHAT_ID} belum diset di Environment Variables!")
 # ==========================================
 
 # Inisialisasi CoinGecko
