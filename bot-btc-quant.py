@@ -106,12 +106,12 @@ def cek_kondisi_pasar(symbol='BTC-USD'):
     else:
         print(">>> WAIT & SEE (TUNGGU) ☕")
         if sma20_now > sma50_now:
-            signal_msg = "\n\n☕ *Sinyal: Wait & See* \nTitik Masuk Belum Aman."
             print("Status: Sedang dalam tren naik. Kalau punya barang, TAHAN.")
             if rsi_now > 70:
-                signal_msg = "\n\n☕ *Sinyal: Wait & See* \nTren Turun. Jangan Tangkap Pisau Jatuh."
+                signal_msg = "\n\n☕ *Sinyal: Wait & See* \nTitik Masuk Belum Aman."
                 print("Warning: Hati-hati, RSI sudah Overbought. Siap-siap jual.")
         else:
+            signal_msg = "\n\n☕ *Sinyal: Wait & See* \nTren Turun. Jangan Tangkap Pisau Jatuh."
             print("Status: Tren sedang turun. Jangan menangkap pisau jatuh.")
     
     # Kirim!
