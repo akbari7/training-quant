@@ -1,0 +1,30 @@
+name: Daily $XAU Scan
+
+on:
+  schedule:
+    # Jalan tiap jam 00:00 UTC (Jam 07:00 WIB)
+    - cron: '15 * * * *'
+  workflow_dispatch: # Biar bisa di-klik Run manual kalau mau tes
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: |
+          pip install pandas yfinance pycoingecko requests
+
+      - name: Run Robot
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+        run: python bot-xau-quant.py
