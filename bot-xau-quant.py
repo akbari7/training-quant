@@ -3,9 +3,10 @@ import os
 import requests
 import yfinance as yf
 import pandas as pd
-import datetime
-import time
 from datetime import datetime
+import time
+import datetime
+from datetime import date
 
 # ==========================================
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
