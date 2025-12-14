@@ -27,4 +27,7 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
-        run: python bot-btc-quant.py
+          COINID: 'bitcoin'
+          MINPERCENT: 5.0
+          ISDAILY: 1
+        run: python analytics-signal.py

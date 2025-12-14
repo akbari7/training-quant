@@ -3,7 +3,7 @@ name: Daily $XAU Scan
 on:
   schedule:
     # Jalan tiap jam 00:00 UTC (Jam 07:00 WIB)
-    - cron: '15 * * * *'
+    - cron: '55 * * * *'
   workflow_dispatch: # Biar bisa di-klik Run manual kalau mau tes
 
 jobs:
@@ -29,4 +29,5 @@ jobs:
           CHAT_ID: ${{ secrets.CHAT_ID }}
           COINID: 'pax-gold'
           MINPERCENT: 1.0
-        run: python bot-dmc-quant.py
+          ISDAILY: 1
+        run: python analytics-signal.py
