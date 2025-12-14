@@ -15,7 +15,7 @@ TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('CHAT_ID')
 ISDAILY = os.getenv('ISDAILY')
 PERCENTENV = os.getenv('MINPERCENT')
-MINPERCENT = float(PERCENTENV) if min_env else 0.0
+MINPERCENT = float(PERCENTENV) if PERCENTENV else 0.0
 COINID = os.getenv('COINID')
 
 # Error Handling
