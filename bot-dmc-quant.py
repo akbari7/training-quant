@@ -14,6 +14,8 @@ from datetime import date
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('CHAT_ID')
 ISDAILY = os.getenv('ISDAILY')
+MINPERCENT = os.getenv('MINPERCENT')
+COINID = os.getenv('COINID')
 
 # Error Handling
 if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
@@ -105,6 +107,7 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         sma20_now = float(last_row['SMA_20'])
         sma50_now = float(last_row['SMA_50'])
 
+        harga_prev = float(prev_row['Close'])
         sma20_prev = float(prev_row['SMA_20'])
         sma50_prev = float(prev_row['SMA_50'])
         rsi_prev = float(prev_row['RSI'])
@@ -112,6 +115,9 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         tanggal = last_row.name.strftime('%Y-%m-%d')
         full_tanggal = last_row.name + datetime.timedelta(hours=7)
         fix_tanggal = full_tanggal.strftime('%Y-%m-%d %H:%M')
+
+        # --- HITUNG PERUBAHAN HARGA HARI INI (%) ---
+        perubahan_persen = ((harga_now - harga_prev) / harga_prev) * 100
 
         # --- TAMPILAN DASHBOARD ---
         print("\n" + "="*45)
@@ -147,45 +153,58 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         # LOGIKA SINYAL
         signal_found = False
 
-        # 1. Golden Cross
-        if (sma20_prev < sma50_prev) and (sma20_now > sma50_now):
-            print(">>> ✅ BUY NOW! (Golden Cross Terdeteksi)")
-            # Update JSON
-            save_state({
-                f"{coin_id}_buy_price": harga_now,
-                f"{coin_id}_has_position": True
-            })
-            signal_found = True
-            signal_msg = "\n\n🚀 *SINYAL: GOLDEN CROSS!* \nTren mulai naik. Cek market bos!"
+        # PRIORITY ALERT: CRASH WARNING (Turun > 1%) 🚨
 
-        # 2. RSI Rebound (Beli pas murah banget)
-        elif (rsi_prev < 30) and (rsi_now > 30):
-            print(">>> ✅ SPECULATIVE BUY (Pantulan dari bawah)")
-            signal_found = True
-            signal_msg = "\n\n💎 *SINYAL: SPECULATIVE BUY* \nRSI mantul dari bawah. Diskon!"
+        if MINPERCENT:
+            lessP = perubahan_persen <= -(MINPERCENT)
+            moreP = perubahan_persen >= -(MINPERCENT)
+            print(f">>> 📉 percent : {lessP}")
+            print(f">>> 📈 percent : {moreP}")
+            if lessP:
+                print(f">>> ⚠️ PERINGATAN: HARGA JATUH > {MINPERCENT}%")
+                signal_found = True
+                signal_msg = f"\n\n🚨 *ALERT: DROP {perubahan_persen:.2f}%* \ndiskon besar atau Crash? Cek chart!"
 
-        # 3. Sell Signal
-        elif (rsi_prev > 70) and (rsi_now < 70):
-            print(">>> ⚠️ SELL NOW! (Sudah mulai turun dari pucuk)")
-            # Reset JSON
-            save_state({
-                f"{coin_id}_buy_price": 0,
-                f"{coin_id}_has_position": False
-            })
-            signal_found = True
-            signal_msg = "\n\n⚠️ *WARNING: OVERBOUGHT* \nHati-hati pucuk. Jangan FOMO Tapi Boleh Jual."
-
-        # 4. Wait
         if not signal_found:
-            print(">>> ☕ WAIT & SEE (Belum ada momen bagus)")
-            if sma20_now > sma50_now:
-                if ISDAILY:
-                    signal_msg = "\n\n☕ *Sinyal: Wait & See* \nTitik Masuk Belum Aman."
-                print("    (Harga sedang naik, tapi titik masuk belum aman. Hold kalau punya.)")
-            else:
-                if ISDAILY:
-                    signal_msg = "\n\n☕ *Sinyal: Wait & See* \nTren Turun. Jangan Tangkap Pisau Jatuh."
-                print("    (Tren turun. Jangan tangkap pisau jatuh.)")
+            # 1. Golden Cross
+            if (sma20_prev < sma50_prev) and (sma20_now > sma50_now):
+                print(">>> ✅ BUY NOW! (Golden Cross Terdeteksi)")
+                # Update JSON
+                save_state({
+                    f"{coin_id}_buy_price": harga_now,
+                    f"{coin_id}_has_position": True
+                })
+                signal_found = True
+                signal_msg = "\n\n🚀 *SINYAL: GOLDEN CROSS!* \nTren mulai naik. Cek market bos!"
+
+            # 2. RSI Rebound (Beli pas murah banget)
+            elif (rsi_prev < 30) and (rsi_now > 30):
+                print(">>> ✅ SPECULATIVE BUY (Pantulan dari bawah)")
+                signal_found = True
+                signal_msg = "\n\n💎 *SINYAL: SPECULATIVE BUY* \nRSI mantul dari bawah. Diskon!"
+
+            # 3. Sell Signal
+            elif (rsi_prev > 70) and (rsi_now < 70):
+                print(">>> ⚠️ SELL NOW! (Sudah mulai turun dari pucuk)")
+                # Reset JSON
+                save_state({
+                    f"{coin_id}_buy_price": 0,
+                    f"{coin_id}_has_position": False
+                })
+                signal_found = True
+                signal_msg = "\n\n⚠️ *WARNING: OVERBOUGHT* \nHati-hati pucuk. Jangan FOMO Tapi Boleh Jual."
+
+            # 4. Wait
+            if not signal_found:
+                print(">>> ☕ WAIT & SEE (Belum ada momen bagus)")
+                if sma20_now > sma50_now:
+                    if ISDAILY:
+                        signal_msg = "\n\n☕ *Sinyal: Wait & See* \nTitik Masuk Belum Aman."
+                    print("    (Harga sedang naik, tapi titik masuk belum aman. Hold kalau punya.)")
+                else:
+                    if ISDAILY:
+                        signal_msg = "\n\n☕ *Sinyal: Wait & See* \nTren Turun. Jangan Tangkap Pisau Jatuh."
+                    print("    (Tren turun. Jangan tangkap pisau jatuh.)")
 
         # Kirim!
         if (signal_msg):
@@ -203,4 +222,4 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
 # --- CARA PAKAI ---
 # Ganti 'delorean' dengan ID koin lain kalau mau.
 # Contoh: 'bitcoin', 'solana', 'pepe', 'shiba-inu'
-cek_kondisi_pasar_micin('delorean')
+cek_kondisi_pasar_micin(COINID)
