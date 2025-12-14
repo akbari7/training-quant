@@ -139,10 +139,13 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         print("-" * 45)
 
         # Cek Tren
+        tren = ''
         if sma20_now > sma50_now:
             print("📈 Tren Besar     : BULLISH (Naik)")
+            tren = 'BULLISH'
         else:
             print("📉 Tren Besar     : BEARISH (Turun)")
+            tren = 'BEARISH'
 
         print("-" * 45)
         print("🤖 SARAN ROBOT:")
@@ -210,7 +213,7 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         # Kirim!
         if (signal_msg):
             header = f"🤖 *LAPORAN {fix_tanggal}: {coin_id.upper()}*"
-            body = f"💵 Harga: ${harga_now:,.6f}\n📊 RSI: {rsi_now:.2f}"
+            body = f"💵 Harga: ${harga_now:,.6f}\n📊 RSI: {rsi_now:.2f}\nTren: {tren}"
             full_pesan = header + body + signal_msg
             kirim_telegram(full_pesan)
             print(f"✅ Laporan {coin_id} terkirim ke HP!")
