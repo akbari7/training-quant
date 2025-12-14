@@ -15,7 +15,7 @@ TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('CHAT_ID')
 ISDAILY = os.getenv('ISDAILY')
 PERCENTENV = os.getenv('MINPERCENT')
-MIN_PERCENT = float(PERCENTENV) if min_env else 0.0
+MINPERCENT = float(PERCENTENV) if min_env else 0.0
 COINID = os.getenv('COINID')
 
 # Error Handling
@@ -156,7 +156,7 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
 
         # PRIORITY ALERT: CRASH WARNING (Turun > 1%) 🚨
 
-        if MINPERCENT:
+        if PERCENTENV:
             lessP = perubahan_persen <= -(MINPERCENT)
             moreP = perubahan_persen >= -(MINPERCENT)
             print(f">>> 📉 percent : {lessP}")
