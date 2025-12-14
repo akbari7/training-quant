@@ -3,7 +3,7 @@ name: Daily $XAU Scan
 on:
   schedule:
     # Jalan tiap jam 00:00 UTC (Jam 07:00 WIB)
-    - cron: '0 0 * * *'
+    - cron: '30 22 * * *'
   workflow_dispatch: # Biar bisa di-klik Run manual kalau mau tes
 
 jobs:
