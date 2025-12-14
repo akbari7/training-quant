@@ -14,7 +14,8 @@ from datetime import date
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('CHAT_ID')
 ISDAILY = os.getenv('ISDAILY')
-MINPERCENT = os.getenv('MINPERCENT')
+PERCENTENV = os.getenv('MINPERCENT')
+MIN_PERCENT = float(PERCENTENV) if min_env else 0.0
 COINID = os.getenv('COINID')
 
 # Error Handling
