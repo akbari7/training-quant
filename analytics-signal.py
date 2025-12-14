@@ -150,6 +150,19 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         print("-" * 45)
         print("🤖 SARAN ROBOT:")
 
+        # --- 🛡️ VOLATILITY SHIELD LOGIC ---
+        # 1. Hitung Daily Returns (perubahan harian dalam %)
+        df['returns'] = df['Close'].pct_change() * 100
+        
+        # 2. Hitung Volatilitas (Standard Deviation dari 30 hari terakhir)
+        vol_harian = df['returns'].tail(30).std()
+        
+        # 3. Hitung Rekomendasi Stop Loss (2x Volatilitas)
+        # Contoh: Jika vol DMC 11%, maka SL adalah 22%
+        rekomendasi_sl_persen = vol_harian * 2
+        harga_stop_loss = harga_now * (1 - (rekomendasi_sl_persen / 100))
+        # ----------------------------------
+
         # --- D. SUSUN PESAN TELEGRAM ---
         # Kita bikin format pesan yang cantik
         signal_msg = ""
@@ -158,7 +171,6 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         signal_found = False
 
         # PRIORITY ALERT: CRASH WARNING (Turun > 1%) 🚨
-
         if PERCENTENV:
             lessP = perubahan_persen <= -(MINPERCENT)
             moreP = perubahan_persen >= -(MINPERCENT)
@@ -214,6 +226,8 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         if (signal_msg):
             header = f"🤖 *LAPORAN {fix_tanggal}: {coin_id.upper()}*"
             body = f"💵 Harga: ${harga_now:,.6f}\n📊 RSI: {rsi_now:.2f}\nTren: {tren}"
+            body += f"\n🛡️ *Volatility Shield:* {vol_harian:.2f}%"
+            body += f"\n🛑 *Safe Stop Loss:* {rekomendasi_sl_persen:.1f}% (~${harga_stop_loss:,.6f})"
             full_pesan = header + body + signal_msg
             kirim_telegram(full_pesan)
             print(f"✅ Laporan {coin_id} terkirim ke HP!")
