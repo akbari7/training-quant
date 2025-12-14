@@ -210,7 +210,7 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         # Kirim!
         if (signal_msg):
             header = f"🤖 *LAPORAN {fix_tanggal}: {coin_id.upper()}*"
-            body = f"💵 Harga: ${harga_now:,.6f}\n📊 RSI: {rsi_now:.2f}\n🧐 Posisi: {last_buy_price}"
+            body = f"💵 Harga: ${harga_now:,.6f}\n📊 RSI: {rsi_now:.2f}"
             full_pesan = header + body + signal_msg
             kirim_telegram(full_pesan)
             print(f"✅ Laporan {coin_id} terkirim ke HP!")
