@@ -247,15 +247,33 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
 
         # Kirim!
         if (signal_msg):
+            # --- 📈 PROFIT / LOSS TRACKER LOGIC ---
+            pnl_msg = "Tidak ada posisi"
+            checkLastPrice = float(last_buy_price) if last_buy_price else 0.0
+            
+            if has_pos and last_buy_price > 0:
+                # Hitung persentase P&L
+                pnl_persen = ((harga_now - last_buy_price) / last_buy_price) * 100
+                
+                # Tentukan emoji & tanda
+                if pnl_persen > 0:
+                    pnl_msg = f"+{pnl_persen:.2f}% 🚀"
+                elif pnl_persen < 0:
+                    pnl_msg = f"{pnl_persen:.2f}% 🔻"
+                else:
+                    pnl_msg = "0.00% ➖"
+                
+                # Tambahkan harga modal di sampingnya biar jelas
+                pnl_msg = f"{pnl_msg} (Modal: ${last_buy_price:,.6f})"
+                
             # Ambil sentimen pasar global
             fng_index = get_fear_greed_index()
 
             header = f"🤖 *LAPORAN {fix_tanggal}: {coin_id.upper()}*"
             body = f"💵 Harga: ${harga_now:,.6f}\n📊 RSI: {rsi_now:.2f}({tren})"
             body += f"\n🎭 Sentimen Global: {fng_index}"
-            checkLastPrice = float(last_buy_price) if last_buy_price else 0.0
             if checkLastPrice > 0:
-                body += f"\n🧐 *Position buy:* {checkLastPrice:.2f}%"
+                body += f"\n🧐 Status Posisi: {pnl_msg}"
             body += f"\n🛡️ *Volatility Shield:* {vol_harian:.2f}%"
             body += f"\n🛑 *Safe Stop Loss:* {rekomendasi_sl_persen:.1f}% (~${harga_stop_loss:,.6f})"
             full_pesan = header + body + signal_msg
