@@ -212,10 +212,6 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
 
             # 4. Wait
             if not signal_found:
-                save_state({
-                    f"{coin_id}_buy_price": 0,
-                    f"{coin_id}_has_position": False
-                })
                 print(">>> ☕ WAIT & SEE (Belum ada momen bagus)")
                 if sma20_now > sma50_now:
                     if ISDAILY:
@@ -230,6 +226,9 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         if (signal_msg):
             header = f"🤖 *LAPORAN {fix_tanggal}: {coin_id.upper()}*"
             body = f"💵 Harga: ${harga_now:,.6f}\n📊 RSI: {rsi_now:.2f}\nTren: {tren}"
+            checkLastPrice = float(last_buy_price) if last_buy_price else 0.0
+            if checkLastPrice > 0:
+                body += f"\n🧐 *Position buy:* {checkLastPrice:.2f}%"
             body += f"\n🛡️ *Volatility Shield:* {vol_harian:.2f}%"
             body += f"\n🛑 *Safe Stop Loss:* {rekomendasi_sl_persen:.1f}% (~${harga_stop_loss:,.6f})"
             full_pesan = header + body + signal_msg
