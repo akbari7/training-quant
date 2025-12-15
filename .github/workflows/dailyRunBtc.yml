@@ -3,7 +3,7 @@ name: Daily $BTC Scan
 on:
   schedule:
     # Jalan tiap jam 00:00 UTC (Jam 07:00 WIB)
-    - cron: '30 22 * * *'
+    - cron: '30 17 * * *'
   workflow_dispatch: # Biar bisa di-klik Run manual kalau mau tes
 
 # --- IZIN MENULIS (TAMBAHAN 1) ---
