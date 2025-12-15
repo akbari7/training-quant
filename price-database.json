@@ -1,8 +1,8 @@
 {
-  "bitcoin_buy_price": 0,
-  "bitcoin_has_position": false,
-  "delorean_buy_price": 0,
-  "delorean_has_position": false,
-  "pax-gold_buy_price": 0,
-  "pax-gold_has_position": false
+    "bitcoin_buy_price": 3,
+    "bitcoin_has_position": false,
+    "delorean_buy_price": 0,
+    "delorean_has_position": false,
+    "pax-gold_buy_price": 0,
+    "pax-gold_has_position": false
 }
