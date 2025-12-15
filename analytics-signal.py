@@ -55,6 +55,27 @@ def save_state(new_data):
         json.dump(current_data, f, indent=4)
         print("💾 Data berhasil disimpan ke JSON lokal!")
 
+def get_fear_greed_index():
+    try:
+         # API gratis dari alternative.me
+        url_fng = "https://api.alternative.me/fng/"
+        response_fng = requests.get(url_fng, timeout=10)
+        data_fng = response_fng.json()
+        
+        value_fng = data_fng['data'][0]['value']
+        status_fng = data_fng['data'][0]['value_classification']
+
+        # Tambahin emoji biar gak garing
+        emoji_fng = "😱" # Extreme Fear
+        if int(value_fng) >= 45: emoji_fng = "😐" # Neutral
+        if int(value_fng) >= 60: emoji_fng = "🙂" # Greed
+        if int(value_fng) >= 75: emoji_fng = "🤑" # Extreme Greed
+        
+        return f"{value_fng} - {status_fng} {emoji_fng}"
+    except Exception as e:
+        print(f"Gagal ambil Fear & Greed: {e}")
+        return "N/A"
+
 
 def cek_kondisi_pasar_micin(coin_id='delorean'):
     # Note: coin_id harus ID dari CoinGecko (bukan symbol).
@@ -142,10 +163,10 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         tren = ''
         if sma20_now > sma50_now:
             print("📈 Tren Besar     : BULLISH (Naik)")
-            tren = 'BULLISH'
+            tren = '📈 BULLISH'
         else:
             print("📉 Tren Besar     : BEARISH (Turun)")
-            tren = 'BEARISH'
+            tren = '📉 BEARISH'
 
         print("-" * 45)
         print("🤖 SARAN ROBOT:")
@@ -190,6 +211,7 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
                     f"{coin_id}_buy_price": harga_now,
                     f"{coin_id}_has_position": True
                 })
+                last_buy_price = harga_now
                 signal_found = True
                 signal_msg = "\n\n🚀 *SINYAL: GOLDEN CROSS!* \nTren mulai naik. Cek market bos!"
 
@@ -207,6 +229,7 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
                     f"{coin_id}_buy_price": 0,
                     f"{coin_id}_has_position": False
                 })
+                last_buy_price = 0.0
                 signal_found = True
                 signal_msg = "\n\n⚠️ *WARNING: OVERBOUGHT* \nHati-hati pucuk. Jangan FOMO Tapi Boleh Jual."
 
@@ -224,8 +247,12 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
 
         # Kirim!
         if (signal_msg):
+            # Ambil sentimen pasar global
+            fng_index = get_fear_greed_index()
+
             header = f"🤖 *LAPORAN {fix_tanggal}: {coin_id.upper()}*"
-            body = f"💵 Harga: ${harga_now:,.6f}\n📊 RSI: {rsi_now:.2f}\nTren: {tren}"
+            body = f"💵 Harga: ${harga_now:,.6f}\n📊 RSI: {rsi_now:.2f}({tren})"
+            body += f"\n🎭 Sentimen Global: {fng_index}"
             checkLastPrice = float(last_buy_price) if last_buy_price else 0.0
             if checkLastPrice > 0:
                 body += f"\n🧐 *Position buy:* {checkLastPrice:.2f}%"
