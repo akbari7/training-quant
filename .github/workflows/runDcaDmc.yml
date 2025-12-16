@@ -1,4 +1,4 @@
-name: Daily $DMC Scan
+name: DCA $DMC Scan
 
 on:
   schedule:
