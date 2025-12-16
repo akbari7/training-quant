@@ -34,6 +34,5 @@ jobs:
           CHAT_ID: ${{ secrets.CHAT_ID }}
           GETPOSITION: 1
           COINID: 'delorean'
-          ISDAILY: 1
           ISDCA: 1
         run: python analytics-signal.py
