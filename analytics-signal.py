@@ -14,6 +14,8 @@ from datetime import date
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('CHAT_ID')
 ISDAILY = os.getenv('ISDAILY')
+ISSHORT = os.getenv('ISSHORT')
+ISDCA = os.getenv('ISDCA')
 PERCENTENV = os.getenv('MINPERCENT')
 MINPERCENT = float(PERCENTENV) if PERCENTENV else 0.0
 COINID = os.getenv('COINID')
@@ -203,47 +205,89 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
                 signal_msg = f"\n\n🚨 *ALERT: DROP {perubahan_persen:.2f}%* \ndiskon besar atau Crash? Cek chart!"
 
         if not signal_found:
-            # 1. Golden Cross
-            if (sma20_prev < sma50_prev) and (sma20_now > sma50_now):
-                print(">>> ✅ BUY NOW! (Golden Cross Terdeteksi)")
-                # Update JSON
-                save_state({
-                    f"{coin_id}_buy_price": harga_now,
-                    f"{coin_id}_has_position": True
-                })
-                last_buy_price = harga_now
-                signal_found = True
-                signal_msg = "\n\n🚀 *SINYAL: GOLDEN CROSS!* \nTren mulai naik. Cek market bos!"
+            
+            # =====================================================
+            # 🔴 STRATEGI 1: BITCOIN (THE BEAR HUNTER - SHORT)
+            # =====================================================
+            if ISSHORT:
+                
+                # A. LOGIKA ENTRY SHORT (Pasang Posisi Jual)
+                # 1. Death Cross (SMA20 motong ke BAWAH SMA50)
+                if (sma20_prev > sma50_prev) and (sma20_now < sma50_now):
+                    signal_msg = "\n\n📉 *SINYAL: OPEN SHORT!* \nDeath Cross terjadi. Tren valid turun."
+                    signal_found = True
+                
+                # 2. RSI Pucuk (Overbought > 70)
+                elif rsi_now > 70:
+                    signal_msg = "\n\n📉 *SINYAL: SHORT SCALP!* \nRSI Pucuk (>70). Siap-siap koreksi."
+                    signal_found = True
 
-            # 2. RSI Rebound (Beli pas murah banget)
-            elif (rsi_prev < 30) and (rsi_now > 30):
-                print(">>> ✅ SPECULATIVE BUY (Pantulan dari bawah)")
-                signal_found = True
-                signal_msg = "\n\n💎 *SINYAL: SPECULATIVE BUY* \nRSI mantul dari bawah. Diskon!"
+                # B. LOGIKA EXIT SHORT (Ambil Untung / Kabur)
+                # 1. RSI Oversold (Murah banget, bahaya kalau masih Short)
+                elif rsi_now < 30:
+                    signal_msg = "\n\n✅ *SINYAL: TAKE PROFIT (COVER SHORT)* \nRSI Oversold (<30). Bungkus profit Short kamu!"
+                    signal_found = True
+                
+                # 2. Golden Cross (Tren balik jadi Bullish)
+                elif (sma20_prev < sma50_prev) and (sma20_now > sma50_now):
+                    signal_msg = "\n\n🚨 *SINYAL: CLOSE SHORT / SWITCH LONG* \nTren berubah Bullish (Golden Cross)."
+                    signal_found = True
 
-            # 3. Sell Signal
-            elif (rsi_prev > 70) and (rsi_now < 70):
-                print(">>> ⚠️ SELL NOW! (Sudah mulai turun dari pucuk)")
-                # Reset JSON
-                save_state({
-                    f"{coin_id}_buy_price": 0,
-                    f"{coin_id}_has_position": False
-                })
-                last_buy_price = 0.0
-                signal_found = True
-                signal_msg = "\n\n⚠️ *WARNING: OVERBOUGHT* \nHati-hati pucuk. Jangan FOMO Tapi Boleh Jual."
+            # =====================================================
+            # 🟢 STRATEGI 2: DMC & PAXG (THE ACCUMULATOR - DCA)
+            # =====================================================
+            elif ISDCA:
+                
+                # 1. Zona Diskon Besar (Lumpsum)
+                if rsi_now < 30:
+                    signal_msg = f"\n\n💎 *SINYAL: LUMPSUM BUY*\nRSI {rsi_now:.2f} (Oversold). Diskon besar, serok!"
+                    signal_found = True
+                    
+                # 2. Zona Cicil (DCA) - Kita set di bawah 45 biar sering nyicil
+                elif rsi_now < 45:
+                    signal_msg = f"\n\n💰 *SINYAL: DCA BUY*\nRSI {rsi_now:.2f} (Murah). Waktunya nyicil santai."
+                    signal_found = True
 
-            # 4. Wait
-            if not signal_found:
-                print(">>> ☕ WAIT & SEE (Belum ada momen bagus)")
-                if sma20_now > sma50_now:
-                    if ISDAILY:
-                        signal_msg = "\n\n☕ *Sinyal: Wait & See* \nTitik Masuk Belum Aman."
-                    print("    (Harga sedang naik, tapi titik masuk belum aman. Hold kalau punya.)")
+            # =====================================================
+            # ⚪ STRATEGI 3: UMUM (BACKUP / STANDARD)
+            # =====================================================
+            else:
+                # Ini logika lama (Golden Cross biasa)
+                # Buat koin lain kalau nanti kamu nambah (misal: Solana)
+                if (sma20_prev < sma50_prev) and (sma20_now > sma50_now):
+                    save_state({
+                        f"{coin_id}_buy_price": harga_now,
+                        f"{coin_id}_has_position": True
+                    })
+                    signal_msg = "\n\n🚀 *SINYAL: GOLDEN CROSS!* \nTren mulai naik."
+                    signal_found = True
+
+                elif (rsi_prev > 70) and (rsi_now < 70):
+                    save_state({
+                        f"{coin_id}_buy_price": 0,
+                        f"{coin_id}_has_position": False
+                    })
+                    signal_msg = "\n\n⚠️ *WARNING: OVERBOUGHT* \nJual sekarang."
+                    signal_found = True
+
+            # =====================================================
+            # ☕ LOGIKA WAIT & SEE (KALAU GAK ADA SINYAL DI ATAS)
+            # =====================================================
+            if not signal_found and ISDAILY:
+                # A. Kalau Mode SHORT
+                if ISSHORT:
+                    if sma20_now < sma50_now:
+                        signal_msg = "\n\n☕ *Wait & See (Short Mode)* \nHold posisi Short. Tren masih turun."
+                    else:
+                        signal_msg = "\n\n☕ *Wait & See (Neutral)* \nTren Bullish, jangan Short dulu."
+                
+                # B. Kalau Mode DCA
+                elif ISDCA:
+                    signal_msg = "\n\n☕ *Wait & See (Pantau)* \nHarga belum cukup murah buat DCA."
+                
+                # C. Mode Standar
                 else:
-                    if ISDAILY:
-                        signal_msg = "\n\n☕ *Sinyal: Wait & See* \nTren Turun. Jangan Tangkap Pisau Jatuh."
-                    print("    (Tren turun. Jangan tangkap pisau jatuh.)")
+                    signal_msg = "\n\n☕ *Wait & See* \nPasar sideways/belum ada sinyal."
 
         # Kirim!
         if (signal_msg):
