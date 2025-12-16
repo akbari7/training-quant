@@ -3,7 +3,7 @@ name: DCA $DMC Scan
 on:
   schedule:
     # Jalan tiap 1 jam
-    - cron: '*/57 * * * *'
+    - cron: '30 17 * * *'
   workflow_dispatch: # Biar bisa di-klik Run manual kalau mau tes
 
 # --- IZIN MENULIS (TAMBAHAN 1) ---
