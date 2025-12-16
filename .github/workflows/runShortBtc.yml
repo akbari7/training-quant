@@ -35,5 +35,6 @@ jobs:
           GETPOSITION: 1
           COINID: 'bitcoin'
           MINPERCENT: 5.0
+          ISDAILY: 1
           ISSHORT: 1
         run: python analytics-signal.py

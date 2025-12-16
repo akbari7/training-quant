@@ -313,7 +313,12 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
             # Ambil sentimen pasar global
             fng_index = get_fear_greed_index()
 
-            header = f"🤖 *LAPORAN {fix_tanggal}: {coin_id.upper()}*"
+            actionCoin = ''
+            if ISSHORT:
+                actionCoin = 'SHORT - '
+            if ISDCA:
+                actionCoin = 'DCA - '
+            header = f"🤖 *{actionCoin}LAPORAN {fix_tanggal}: {coin_id.upper()}*"
             body = f"💵 Harga: ${harga_now:,.6f}\n📊 RSI: {rsi_now:.2f}({tren})"
             body += f"\n🎭 Sentimen Global: {fng_index}"
             if checkLastPrice > 0:
