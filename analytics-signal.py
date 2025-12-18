@@ -398,7 +398,7 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
             header = f"🤖 *{actionCoin}LAPORAN {fix_tanggal}: {coin_id.upper()}*"
             body = f"💵 Harga: ${harga_now:,.6f}\n📊 RSI: {rsi_now:.2f}({tren})"
             body += f"\n🎭 Sentimen Global: {fng_index}"
-            if pnl_persen:
+            if pnl_msg:
                 body += f"\n🧐 Status Posisi: {pnl_msg}"
             body += f"\n🛡️ *Volatility Shield:* {vol_harian:.2f}%"
             body += f"\n🛑 *Safe Stop Loss:* {rekomendasi_sl_persen:.1f}% (~${harga_stop_loss:,.6f})"
