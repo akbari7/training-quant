@@ -223,7 +223,7 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         # LOGIKA SINYAL
         signal_found = False
 
-        whale_msg = ""
+        whale_msg = f"\n🐋 *WHALE ALERT:* Volume Now {vol_now:.2f}, Volume Ma {vol_ma_now}."
         if is_whale:
             # Hitung berapa kali lipat
             multiplier = vol_now / vol_ma_now
