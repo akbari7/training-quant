@@ -99,7 +99,27 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
 
         # 2. Rapikan Data ke Pandas DataFrame
         prices = raw_data['prices'] # Isinya [timestamp, price]
+        volumes = raw_data['total_volumes']
         df = pd.DataFrame(prices, columns=['timestamp', 'Close'])
+
+        #Define volume dari df
+        # 1. Siapkan Data Volume
+        # Kita cuma butuh angkanya saja (index ke-1), karena timestamp sudah ada di df
+        vol_list = [v[1] for v in volumes]
+
+        # 2. PENYELARASAN (PENTING!) ⚠️
+        # Kadang API CoinGecko ngasih harga 300 baris, tapi volume cuma 299 baris.
+        # Kalau langsung ditempel, nanti error "Length mismatch".
+        # Jadi kita cari panjang terpendek dulu.
+        min_len = min(len(df), len(vol_list))
+
+        # Potong data biar sama panjang
+        df = df.iloc[:min_len]         # Potong baris DataFrame
+        vol_list = vol_list[:min_len]  # Potong list volume
+
+        # 3. TEMPEL kolom volume-nya
+        df['volume'] = vol_list  # <--- Ini langkah nambahin kolomnya
+        #End define volume
 
         # Konversi Timestamp (ms) ke Tanggal yang bisa dibaca
         df['Date'] = pd.to_datetime(df['timestamp'], unit='ms')
@@ -108,6 +128,12 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         # 3. Hitung Indikator (Resep Quant Kita)
         df['SMA_20'] = df['Close'].rolling(window=20).mean()
         df['SMA_50'] = df['Close'].rolling(window=50).mean()
+
+        # Hitung Volume MA (Buat Whale Detector)
+        df['Vol_SMA20'] = df['volume'].rolling(window=20).mean()
+        # Ambil data terakhir
+        vol_now = df['volume'].iloc[-1]
+        vol_ma_now = df['Vol_SMA20'].iloc[-1]
 
         # Hitung RSI
         delta = df['Close'].diff()
@@ -121,6 +147,10 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
             print("⚠️ Data historis kurang panjang untuk menghitung SMA 50.")
             print(f"Umur data cuma {len(df)} hari.")
             return
+        
+        # 3. Cek Lonjakan (Spike)
+        # Kita set threshold 2.0x (artinya volume hari ini 2x lipat rata-rata)
+        is_whale = vol_now > (vol_ma_now * 2.0)
 
         # 4. Ambil Data Terakhir
         last_row = df.iloc[-1]
@@ -192,6 +222,12 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
 
         # LOGIKA SINYAL
         signal_found = False
+
+        whale_msg = ""
+        if is_whale:
+            # Hitung berapa kali lipat
+            multiplier = vol_now / vol_ma_now
+            whale_msg = f"\n🐋 *WHALE ALERT:* Volume {multiplier:.1f}x lipat! Ada pergerakan besar."
 
         # PRIORITY ALERT: CRASH WARNING (Turun > 1%) 🚨
         if PERCENTENV:
@@ -325,6 +361,8 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
                 body += f"\n🧐 Status Posisi: {pnl_msg}"
             body += f"\n🛡️ *Volatility Shield:* {vol_harian:.2f}%"
             body += f"\n🛑 *Safe Stop Loss:* {rekomendasi_sl_persen:.1f}% (~${harga_stop_loss:,.6f})"
+            if whale_msg:
+                body += whale_msg
             full_pesan = header + body + signal_msg
             kirim_telegram(full_pesan)
             print(f"✅ Laporan {coin_id} terkirim ke HP!")
