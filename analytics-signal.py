@@ -246,43 +246,75 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
             # 🔴 STRATEGI 1: BITCOIN (THE BEAR HUNTER - SHORT)
             # =====================================================
             if ISSHORT:
+                last_short_price = state.get(f"{coin_id}_short_price", 0) 
+                has_short_pos = state.get(f"{coin_id}_has_short_position", False)
                 
-                # A. LOGIKA ENTRY SHORT (Pasang Posisi Jual)
-                # 1. Death Cross (SMA20 motong ke BAWAH SMA50)
-                if (sma20_prev > sma50_prev) and (sma20_now < sma50_now):
-                    signal_msg = "\n\n📉 *SINYAL: OPEN SHORT!* \nDeath Cross terjadi. Tren valid turun."
-                    signal_found = True
-                
-                # 2. RSI Pucuk (Overbought > 70)
-                elif rsi_now > 70:
-                    signal_msg = "\n\n📉 *SINYAL: SHORT SCALP!* \nRSI Pucuk (>70). Siap-siap koreksi."
-                    signal_found = True
+                # --- A. LOGIKA ENTRY (Cek Sinyal CUMA kalau BELUM punya posisi) ---
+                if not has_short_pos:
+                    # 1. Death Cross (SMA20 motong ke BAWAH SMA50)
+                    if (sma20_prev > sma50_prev) and (sma20_now < sma50_now):
+                        signal_msg = "\n\n📉 *SINYAL: OPEN SHORT!* \nDeath Cross terjadi. Tren valid turun."
+                        signal_found = True
+                        save_state({
+                            f"{coin_id}_short_price": harga_now, 
+                            f"{coin_id}_has_short_position": True
+                        })
+                    
+                    # 2. RSI Pucuk (Overbought > 70)
+                    elif rsi_now > 70:
+                        signal_msg = "\n\n📉 *SINYAL: SHORT SCALP!* \nRSI Pucuk (>70). Siap-siap koreksi."
+                        signal_found = True
+                        save_state({
+                            f"{coin_id}_short_price": harga_now,
+                            f"{coin_id}_has_short_position": True
+                        })
 
-                # B. LOGIKA EXIT SHORT (Ambil Untung / Kabur)
-                # 1. RSI Oversold (Murah banget, bahaya kalau masih Short)
-                elif rsi_now < 30:
-                    signal_msg = "\n\n✅ *SINYAL: TAKE PROFIT (COVER SHORT)* \nRSI Oversold (<30). Bungkus profit Short kamu!"
-                    signal_found = True
-                
-                # 2. Golden Cross (Tren balik jadi Bullish)
-                elif (sma20_prev < sma50_prev) and (sma20_now > sma50_now):
-                    signal_msg = "\n\n🚨 *SINYAL: CLOSE SHORT / SWITCH LONG* \nTren berubah Bullish (Golden Cross)."
-                    signal_found = True
+                # --- B. LOGIKA EXIT (Cek Sinyal CUMA kalau SUDAH punya posisi) ---
+                elif has_short_pos:
+                    # 1. RSI Oversold (Murah banget -> SAATNYA TP)
+                    if rsi_now < 30:
+                        signal_msg = "\n\n✅ *SINYAL: TAKE PROFIT (COVER SHORT)* \nRSI Oversold (<30). Bungkus profit Short kamu!"
+                        signal_found = True
+                        # RESET STATUS
+                        save_state({
+                            f"{coin_id}_short_price": 0,
+                            f"{coin_id}_has_short_position": False
+                        })
+                    
+                    # 2. Golden Cross (Tren balik jadi Bullish -> CUT LOSS)
+                    elif (sma20_prev < sma50_prev) and (sma20_now > sma50_now):
+                        signal_msg = "\n\n🚨 *SINYAL: CLOSE SHORT / SWITCH LONG* \nTren berubah Bullish (Golden Cross)."
+                        signal_found = True
+                        # RESET STATUS
+                        save_state({
+                            f"{coin_id}_short_price": 0,
+                            f"{coin_id}_has_short_position": False
+                        })
 
             # =====================================================
-            # 🟢 STRATEGI 2: DMC & PAXG (THE ACCUMULATOR - DCA)
+            # 🟢 STRATEGI 2: DMC (DCA ACCUMULATOR)
             # =====================================================
             elif ISDCA:
+                # Logika DCA tetap seperti request kamu:
+                # "Tetep kabarin walau ngga punya posisi"
                 
-                # 1. Zona Diskon Besar (Lumpsum)
+                # 1. Zona Diskon Besar
                 if rsi_now < 30:
-                    signal_msg = f"\n\n💎 *SINYAL: LUMPSUM BUY*\nRSI {rsi_now:.2f} (Oversold). Diskon besar, serok!"
+                    signal_msg = f"\n\n💎 *SINYAL: LUMPSUM BUY*\nRSI {rsi_now:.2f} (Oversold). Diskon besar!"
                     signal_found = True
+                    # Update harga terakhir buat referensi aja (opsional)
+                    save_state({f"{coin_id}_buy_price": harga_now})
                     
-                # 2. Zona Cicil (DCA) - Kita set di bawah 45 biar sering nyicil
+                # 2. Zona Cicil
                 elif rsi_now < 45:
                     signal_msg = f"\n\n💰 *SINYAL: DCA BUY*\nRSI {rsi_now:.2f} (Murah). Waktunya nyicil santai."
                     signal_found = True
+                    save_state({f"{coin_id}_buy_price": harga_now})
+                
+                # 3. EXIT (Take Profit) - Tetap lapor walau status 'false'
+                elif rsi_now > 85:
+                      signal_msg = f"\n\n💰 *SINYAL: TAKE PROFIT (DCA)*\nRSI {rsi_now:.2f} (To The Moon). Waktunya Jual!"
+                      signal_found = True
 
             # =====================================================
             # ⚪ STRATEGI 3: UMUM (BACKUP / STANDARD)
@@ -328,23 +360,32 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
         # Kirim!
         if (signal_msg):
             # --- 📈 PROFIT / LOSS TRACKER LOGIC ---
-            pnl_msg = "Tidak ada posisi"
-            checkLastPrice = float(last_buy_price) if last_buy_price else 0.0
-            
-            if has_pos and last_buy_price > 0:
-                # Hitung persentase P&L
-                pnl_persen = ((harga_now - last_buy_price) / last_buy_price) * 100
+            pnl_msg = ""
+
+            # 1. P&L KHUSUS SHORT (Untung kalau harga TURUN)
+            if ISSHORT:
+                entry_price = float(state.get(f"{coin_id}_short_price", 0))
+                has_pos_short = state.get(f"{coin_id}_has_short_position", False)
                 
-                # Tentukan emoji & tanda
-                if pnl_persen > 0:
-                    pnl_msg = f"+{pnl_persen:.2f}% 🚀"
-                elif pnl_persen < 0:
-                    pnl_msg = f"{pnl_persen:.2f}% 🔻"
-                else:
-                    pnl_msg = "0.00% ➖"
-                
-                # Tambahkan harga modal di sampingnya biar jelas
-                pnl_msg = f"{pnl_msg} (Modal: ${last_buy_price:,.6f})"
+                if has_pos_short and entry_price > 0:
+                    # Rumus Short: (Harga Masuk - Harga Sekarang) / Harga Masuk
+                    pnl_persen = ((entry_price - harga_now) / entry_price) * 100
+                    
+                    if pnl_persen > 0: pnl_msg = f"+{pnl_persen:.2f}% 🚀"
+                    elif pnl_persen < 0: pnl_msg = f"{pnl_persen:.2f}% 🔻"
+                    else: pnl_msg = "0.00% ➖"
+                    pnl_msg += f" (Entry Short: ${entry_price:,.2f})"
+            # 2. P&L KHUSUS DCA / LONG (Untung kalau harga NAIK)
+            else:
+                entry_price = float(state.get(f"{coin_id}_buy_price", 0))
+                # Cek 'has_position' (nama lama) atau sekedar ada harga
+                if entry_price > 0:
+                    pnl_persen = ((harga_now - entry_price) / entry_price) * 100
+                    
+                    if pnl_persen > 0: pnl_msg = f"+{pnl_persen:.2f}% 🚀"
+                    elif pnl_persen < 0: pnl_msg = f"{pnl_persen:.2f}% 🔻"
+                    else: pnl_msg = "0.00% ➖"
+                    pnl_msg += f" (Modal: ${entry_price:,.6f})"
                 
             # Ambil sentimen pasar global
             fng_index = get_fear_greed_index()
@@ -357,7 +398,7 @@ def cek_kondisi_pasar_micin(coin_id='delorean'):
             header = f"🤖 *{actionCoin}LAPORAN {fix_tanggal}: {coin_id.upper()}*"
             body = f"💵 Harga: ${harga_now:,.6f}\n📊 RSI: {rsi_now:.2f}({tren})"
             body += f"\n🎭 Sentimen Global: {fng_index}"
-            if checkLastPrice > 0:
+            if pnl_persen:
                 body += f"\n🧐 Status Posisi: {pnl_msg}"
             body += f"\n🛡️ *Volatility Shield:* {vol_harian:.2f}%"
             body += f"\n🛑 *Safe Stop Loss:* {rekomendasi_sl_persen:.1f}% (~${harga_stop_loss:,.6f})"
