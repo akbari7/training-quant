@@ -1,4 +1,4 @@
-name: SHORT $BTC Scan
+name: SHORT $DMC Scan
 
 on:
   schedule:
